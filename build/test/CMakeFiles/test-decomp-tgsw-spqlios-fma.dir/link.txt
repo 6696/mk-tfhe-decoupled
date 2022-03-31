@@ -1,1 +1,0 @@
-/usr/bin/g++-5   -std=gnu++11 -g3 -O0 -Wall -Werror  -rdynamic CMakeFiles/test-decomp-tgsw-spqlios-fma.dir/test-decomp-tgsw.cpp.o  -o test-decomp-tgsw-spqlios-fma  -Wl,-rpath,/home/daniil/IdeaProjects/mk-tfhe-auction/build/libtfhe ../libtfhe/libtfhe-spqlios-fma.so 

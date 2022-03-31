@@ -1,1 +1,0 @@
-/usr/bin/gcc-5  -std=c99 -g3 -O0 -Wall -Werror  -rdynamic CMakeFiles/test-c-binding-spqlios-fma.dir/test-c-binding.c.o  -o test-c-binding-spqlios-fma  -Wl,-rpath,/home/daniil/IdeaProjects/mk-tfhe-auction/build/libtfhe ../libtfhe/libtfhe-spqlios-fma.so 

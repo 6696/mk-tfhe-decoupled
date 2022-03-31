@@ -1,1 +1,0 @@
-/usr/bin/g++-5   -std=gnu++11 -g3 -O0 -Wall -Werror  -rdynamic CMakeFiles/test-lwe-spqlios-avx.dir/test-lwe.cpp.o  -o test-lwe-spqlios-avx  -Wl,-rpath,/home/daniil/IdeaProjects/mk-tfhe-auction/build/libtfhe ../libtfhe/libtfhe-spqlios-avx.so 
