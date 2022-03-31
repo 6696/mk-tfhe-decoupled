@@ -69,8 +69,8 @@ int32_t main(int32_t argc, char **argv) {
     static const double stdevRLWEkey = bk_stdev; // 3.29e-10; // 0; // 0.012467;  // RLWE key standard deviation
     static const double stdevRLWE = bk_stdev; // 3.29e-10; // 0; // 0.012467;     // RLWE ciphertexts standard deviation
     static const double stdevRGSW = bk_stdev; // 3.29e-10;     // RGSW ciphertexts standard deviation 
-    static const int32_t Bgbit = 9;        // Base bit gadget
-    static const int32_t dg = 3;           // dimension gadget
+    static const int32_t Bgbit = 8;        // Base bit gadget
+    static const int32_t dg = 4;           // dimension gadget
     static const double stdevBK = bk_stdev; // 3.29e-10;       // BK standard deviation
     static const int32_t parties = 2;      // number of parties
 
