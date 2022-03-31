@@ -224,7 +224,7 @@ struct MKRLweKey {
                 is.read((char *) &Pkey[i*dg + j].N, sizeof(int32_t));
                 const int32_t N = Pkey[i*dg + j].N;
                 Torus32 *__restrict r = Pkey[i*dg + j].coefsT;
-                for (int32_t l = 0; i < N; ++i){
+                for (int32_t l = 0; l < N; ++l){
                     is.read((char *) &r[l], sizeof(Torus32));
                 }
             }
