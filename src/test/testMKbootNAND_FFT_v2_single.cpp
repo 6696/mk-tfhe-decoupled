@@ -119,13 +119,27 @@ int32_t main(int32_t argc, char **argv) {
     cout << "KeyGen MKlwekey: DONE!" << endl;
 
     // RLWE key
-    MKRLweKey* PK = new_MKRLweKey(RLWEparams, MKparams1);
+//    MKRLweKey* PK = new_MKRLweKey(RLWEparams, MKparams1);
+//    MKRLweKeyGenPublic(PK);
+//    //        Try serialization
+//    {
+//        std::fstream myfile;
+//        myfile = std::fstream("CommonKey.binary", std::ios::out | std::ios::binary);
+//        PK->serialize(myfile);
+//    }
+    //        Try deserialization
+    MKRLweKey* dPK = new_MKRLweKey(RLWEparams, MKparams1);
+    {
+        std::fstream myfile;
+        myfile = std::fstream("CommonKey.binary", std::ios::in | std::ios::binary);
+        dPK->deserialize(myfile);
+    }
+
     MKRLweKey* MKrlwekey1 = new_MKRLweKey(RLWEparams, MKparams1);
     MKRLweKey* MKrlwekey2 = new_MKRLweKey(RLWEparams, MKparams2);
     // gen public keys
-    MKRLweKeyGenPublic(PK);
-    MKRLweKeyGenSingle(MKrlwekey1, PK);
-    MKRLweKeyGenSingle(MKrlwekey2, PK);
+    MKRLweKeyGenSingle(MKrlwekey1, dPK);
+    MKRLweKeyGenSingle(MKrlwekey2, dPK);
     cout << "KeyGen MKrlwekey: DONE!" << endl;
 
     // LWE key extracted 
@@ -168,16 +182,41 @@ int32_t main(int32_t argc, char **argv) {
 
     //TODO: merge BSK, KSK
     std::vector<MKLweBootstrappingKey_v2*> keysArray;
-    keysArray.push_back(MKlweBK1);
+    //        Try serialization
+    {
+        std::fstream myfile;
+        myfile = std::fstream("dMKlweBK1.binary", std::ios::out | std::ios::binary);
+        MKlweBK1->serialize(myfile);
+    }
+    //        Try deserialization
+    MKLweBootstrappingKey_v2* dMKlweBK1 = new_MKLweBootstrappingKey_v2(LWEparams, RLWEparams, MKparams1);
+    {
+        std::fstream myfile;
+        myfile = std::fstream("dMKlweBK1.binary", std::ios::in | std::ios::binary);
+        dMKlweBK1->deserialize(myfile);
+    }
+    keysArray.push_back(dMKlweBK1);
     keysArray.push_back(MKlweBK2);
     MKLweBootstrappingKey_v2* MKlweBK = new_MKLweBootstrappingKey_v2Merged(keysArray, MKparams1, LWEparams, RLWEparams);
     MKLweBootstrappingKeyFFT_v2* MKlweBK_FFT = new_MKLweBootstrappingKeyFFT_v2(MKlweBK, LWEparams, RLWEparams, MKparams1);
 //        cout << "BSK, KSK merged" << endl;
     //TODO: merge PK
     std::vector<MKRLweKey*> PKArray;
-    PKArray.push_back(MKrlwekey1);
+    //        Try serialization
+    {
+        std::fstream myfile;
+        myfile = std::fstream("rlwekey1.binary", std::ios::out | std::ios::binary);
+        MKrlwekey1->serialize(myfile);
+    }
+    //        Try deserialization
+    MKRLweKey* dRLWEKey1 = new_MKRLweKey(RLWEparams, MKparams1);
+    {
+        std::fstream myfile;
+        myfile = std::fstream("rlwekey1.binary", std::ios::in | std::ios::binary);
+        dRLWEKey1->deserialize(myfile);
+    }
+    PKArray.push_back(dRLWEKey1);
     PKArray.push_back(MKrlwekey2);
-//        MKRLweKey* MKrlwekey_merged = new_MKRLweKey(RLWEparams, MKparams1);
     MKRLweKey* MKrlwekey_merged = MKRLweKeyMerge(PKArray, RLWEparams, MKparams1);
 //        cout << "PK merged" << endl;
 
@@ -196,47 +235,31 @@ int32_t main(int32_t argc, char **argv) {
         MKLweSample *test_in2 = new_MKLweSample(LWEparams, MKparams2);
 
 
-        MKbootsSymEncryptSingleFirst(test_in1, mess1, MKlwekey1);
-        MKbootsSymEncryptSingle(test_in1, MKlwekey2);
-        test_in1->current_variance = stdevLWE*stdevLWE;
-
-        MKbootsSymEncryptSingleFirst(test_in2, mess2, MKlwekey1);
-        MKbootsSymEncryptSingle(test_in2, MKlwekey2);
-        test_in2->current_variance = stdevLWE*stdevLWE;
-
-        // generate output sample
-        MKLweSample *test_out_v2m2 = new_MKLweSample(LWEparams, MKparams1);
-
-        cout << "Encryption: DONE!" << endl;
-
-
-
-
 //        // verify encrypt
 //        MKbootsSymDecryptSingle(test_in1, MKlwekey1);
 //        MKbootsSymDecryptSingle(test_in1, MKlwekey2);
 //        int32_t mess1_dec = MKbootsSymDecryptSingleFinalize(test_in1);
 
         //        Try serialization
-//        {
-//            std::fstream myfile;
-//            myfile = std::fstream("key1.binary", std::ios::out | std::ios::binary);
-//            MKlwekey1->serialize(myfile);
-//        }
+        {
+            std::fstream myfile;
+            myfile = std::fstream("key1.binary", std::ios::out | std::ios::binary);
+            MKlwekey1->serialize(myfile);
+        }
 //        {
 //            std::fstream myfile;
 //            myfile = std::fstream("key2.binary", std::ios::out | std::ios::binary);
 //            MKlwekey2->serialize(myfile);
 //        }
-//
-//        //        Try deserialization
-//        MKLweKey* deserializedKey1 = new_MKLweKey(LWEparams, MKparams1);
-//        {
-//            std::fstream myfile;
-//            myfile = std::fstream("key1.binary", std::ios::in | std::ios::binary);
-//            deserializedKey1->deserialize(myfile);
-//        }
-//        //        Try deserialization
+
+        //        Try deserialization
+        MKLweKey* deserializedKey1 = new_MKLweKey(LWEparams, MKparams1);
+        {
+            std::fstream myfile;
+            myfile = std::fstream("key1.binary", std::ios::in | std::ios::binary);
+            deserializedKey1->deserialize(myfile);
+        }
+        //        Try deserialization
 //        MKLweKey* deserializedKey2 = new_MKLweKey(LWEparams, MKparams2);
 //        {
 //            std::fstream myfile;
@@ -250,6 +273,8 @@ int32_t main(int32_t argc, char **argv) {
 //
 //        cout << "Message 1: clear = " << mess1 << ", decrypted = " << mess1_dec << endl;
 //        cout << "Message 2: clear = " << mess2 << ", decrypted = " << mess2_dec << endl;
+        cout << "Message 1: clear = " << mess1 << endl;
+        cout << "Message 2: clear = " << mess2 << endl;
 //
 //        // count encrypt/decrypt errors
 //        if (mess1 != mess1_dec)
@@ -260,6 +285,19 @@ int32_t main(int32_t argc, char **argv) {
 //        {
 //            error_count_EncDec += 1;
 //        }
+
+        MKbootsSymEncryptSingleFirst(test_in1, mess1, deserializedKey1);
+        MKbootsSymEncryptSingle(test_in1, MKlwekey2);
+        test_in1->current_variance = stdevLWE*stdevLWE;
+
+        MKbootsSymEncryptSingleFirst(test_in2, mess2, MKlwekey2);
+        MKbootsSymEncryptSingle(test_in2, deserializedKey1);
+        test_in2->current_variance = stdevLWE*stdevLWE;
+
+        // generate output sample
+        MKLweSample *test_out_v2m2 = new_MKLweSample(LWEparams, MKparams1);
+
+        cout << "Encryption: DONE!" << endl;
 
 
         // evaluate MK bootstrapped NAND 
@@ -293,12 +331,6 @@ int32_t main(int32_t argc, char **argv) {
 //            cout << t32tod(MKlwePhase(test_in2, MKlwekey)) << " - ";
 //            cout << t32tod(MKlwePhase(test_out_v2m2, MKlwekey)) << endl;
         }
-
-
-
-
-
-
 
 
         // delete samples

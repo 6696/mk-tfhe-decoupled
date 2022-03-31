@@ -620,32 +620,6 @@ EXPORT MKLweBootstrappingKey_v2 *new_MKLweBootstrappingKey_v2Merged(std::vector<
         MKLweBootstrappingKey_v2* old_bks = array[p];
 
         MKlweBK->ks[p] = old_bks->ks[p];
-//        MKlweBK->bk[p] = old_bks->bk[p];
-//        MKlweBK->bk[p].N = old_bks->bk[p].N;
-//                old_bks->bk[p];
-
-//        LweKeySwitchKey* k = old_bks->ks;
-//        cout << k->n << endl;
-
-//        obj->ks = old_ks->ks;
-//        merged_ks[p] = old_ks->ks[p];
-//        for (int32_t i = 0; i < n_extract; i++)
-//        {
-//            for (int32_t j = 0; j < dks; j++)
-//            {
-//                for (int32_t l = 0; l < Bks; l++) {
-////                    lweCopy(&merged_ks[p].ks[i][j][l], &bk->ks[p].ks[i][j][l], LWEparams);
-////                    LweSample* result = &obj->ks->ks[i][j][l];
-////                    LweSample* result = &merged_ks[p].ks[i][j][l];
-////                    LweSample* result = &obj->ks[p].ks[i][j][l];
-////                    LweSample* sample = &old_ks->ks[p].ks[i][j][l];
-////                    LweSample* sample = &old_ks->ks[p].ks[i][j][l];
-////                    lweCopyP(result, sample, LWEparams);
-//
-//                    lweCopy(&merged_ks[p].ks, &old_ks->ks[p].ks, LWEparams);
-//                }
-//            }
-//        }
     }
 
     const int32_t n = MKparams->n;
@@ -660,27 +634,9 @@ EXPORT MKLweBootstrappingKey_v2 *new_MKLweBootstrappingKey_v2Merged(std::vector<
             MKlweBK->bk[i*n+j].party = i;
             // LWE key si encrypted with RLWE key Si
             MKlweBK->bk[i*n+j] = old_bks->bk[i*n+j];
-//            MKTGswUniEncryptI_v2(&result->bk[i*n+j], LWEkey->key[i].key[j], i, MKparams->stdevBK, RLWEkey); // party = i
         }
     }
 
-
-    // Bootstrapping Key FFT
-//    int32_t nb_polys = 3*dg;
-//    MKTGswUESampleFFT_v2 *merged_bkFFT = new_MKTGswUESampleFFT_v2_array(n*parties, RLWEparams, MKparams, 0, 0.0);
-//
-//    for (int p = 0; p < parties; ++p)
-//    {
-//        MKLweBootstrappingKeyFFT_v2* old_bk = reinterpret_cast<MKLweBootstrappingKeyFFT_v2 *>(&array[p]);
-//        for (int i = 0; i < n; ++i)
-//        {
-//            for (int j = 0; j < nb_polys; ++j)
-//            {
-//                merged_bkFFT[p*n+i].d[j] = old_bk->bkFFT[p*n+i].d[j];
-//            }
-//            merged_bkFFT[p*n+i].party = old_bk->bkFFT[p*n+i].party;
-//        }
-//    }
 
     return MKlweBK;
 }

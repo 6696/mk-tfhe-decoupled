@@ -5,6 +5,8 @@
 #include "tfhe_core.h"
 #include <iostream>
 #include <vector>
+#include "mkTFHEsamples.h"
+#include "lwekeyswitch.h"
 
 
 struct MKLweKey {
@@ -141,6 +143,96 @@ struct MKRLweKey {
     TLweKey* key; // RLWE secret keys for all the parties
     TorusPolynomial* Pkey; // RLWE public keys for all the parties
 
+
+    std::ostream& serialize(std::ostream& os) const {
+        // LWEparams
+        os.write((char *) RLWEparams, sizeof(TLweParams));
+
+        // MKparams
+        os.write((char *) &MKparams->n,	sizeof( int32_t));// LWE modulus
+        os.write((char *) &MKparams->n_extract,	sizeof( int32_t));// LWE extract modulus (used in bootstrapping)
+        os.write((char *) &MKparams->hLWE,			sizeof( int32_t));// HW secret key LWE
+        os.write((char *) &MKparams->stdevLWE,		sizeof( double ));// LWE ciphertexts standard deviation
+        os.write((char *) &MKparams->Bksbit,		sizeof( int32_t));// Base bit key switching
+        os.write((char *) &MKparams->dks,			sizeof( int32_t));// dimension key switching
+        os.write((char *) &MKparams->stdevKS,		sizeof( double ));// KS key standard deviation
+        os.write((char *) &MKparams->N,			sizeof( int32_t));// RLWE,RGSW modulus
+        os.write((char *) &MKparams->hRLWE,		sizeof( int32_t));// HW secret key RLWE,RGSW
+        os.write((char *) &MKparams->stdevRLWEkey,	sizeof( double ));// RLWE key standard deviation
+        os.write((char *) &MKparams->stdevRLWE,	sizeof( double ));	// RLWE ciphertexts standard deviation
+        os.write((char *) &MKparams->stdevRGSW,	sizeof( double ));	// RGSW ciphertexts standard deviation
+        os.write((char *) &MKparams->Bgbit,		sizeof( int32_t));// Base bit gadget
+        os.write((char *) &MKparams->dg,			sizeof( int32_t));// dimension gadget
+        os.write((char *) &MKparams->stdevBK,		sizeof( double ));// BK standard deviation
+        os.write((char *) &MKparams->parties,		sizeof( int32_t));// number of parties
+        os.write((char *) &MKparams->maskMod,		sizeof(uint32_t));// Bg - 1
+        os.write((char *) &MKparams->halfBg,		sizeof( int32_t));// Bg/2
+        os.write((char *) MKparams->g,		sizeof( Torus32));// Bg/2
+        os.write((char *) &MKparams->offset,		sizeof( uint32_t));// offset = Bg/2 * (2^(32-Bgbit) + 2^(32-2*Bgbit) + ... + 2^(32-l*Bgbit))
+
+        //only public keys
+        const int32_t dg = MKparams->dg;
+        for (int i = 0; i <= MKparams->parties; ++i)
+        {
+            for (int j = 0; j < dg; ++j)
+            {
+                os.write((char *) &Pkey[i*dg + j].N, sizeof(int32_t));
+                const int32_t N = Pkey[i*dg + j].N;
+                Torus32 *__restrict r = Pkey[i*dg + j].coefsT;
+                for (int32_t l = 0; i < N; ++i){
+                    os.write((char *) &r[l], sizeof(Torus32));
+                }
+            }
+        }
+
+        return os;
+    }
+
+    std::istream& deserialize(std::istream& is) {
+
+        // LWEparams
+        is.read((char *) RLWEparams, sizeof(TLweParams));
+
+        // MKparams
+        is.read((char *) &MKparams->n,	sizeof( int32_t));// LWE modulus
+        is.read((char *) &MKparams->n_extract,	sizeof( int32_t));// LWE extract modulus (used in bootstrapping)
+        is.read((char *) &MKparams->hLWE,			sizeof( int32_t));// HW secret key LWE
+        is.read((char *) &MKparams->stdevLWE,		sizeof( double ));// LWE ciphertexts standard deviation
+        is.read((char *) &MKparams->Bksbit,		sizeof( int32_t));// Base bit key switching
+        is.read((char *) &MKparams->dks,			sizeof( int32_t));// dimension key switching
+        is.read((char *) &MKparams->stdevKS,		sizeof( double ));// KS key standard deviation
+        is.read((char *) &MKparams->N,			sizeof( int32_t));// RLWE,RGSW modulus
+        is.read((char *) &MKparams->hRLWE,		sizeof( int32_t));// HW secret key RLWE,RGSW
+        is.read((char *) &MKparams->stdevRLWEkey,	sizeof( double ));// RLWE key standard deviation
+        is.read((char *) &MKparams->stdevRLWE,	sizeof( double ));	// RLWE ciphertexts standard deviation
+        is.read((char *) &MKparams->stdevRGSW,	sizeof( double ));	// RGSW ciphertexts standard deviation
+        is.read((char *) &MKparams->Bgbit,		sizeof( int32_t));// Base bit gadget
+        is.read((char *) &MKparams->dg,			sizeof( int32_t));// dimension gadget
+        is.read((char *) &MKparams->stdevBK,		sizeof( double ));// BK standard deviation
+        is.read((char *) &MKparams->parties,		sizeof( int32_t));// number of parties
+        is.read((char *) &MKparams->maskMod,		sizeof(uint32_t));// Bg - 1
+        is.read((char *) &MKparams->halfBg,		sizeof( int32_t));// Bg/2
+        is.read((char *) MKparams->g,		sizeof( Torus32));// Bg/2
+        is.read((char *) &MKparams->offset,		sizeof( uint32_t));// offset = Bg/2 * (2^(32-Bgbit) + 2^(32-2*Bgbit) + ... + 2^(32-l*Bgbit))
+
+        //only public keys
+        const int32_t dg = MKparams->dg;
+        for (int i = 0; i <= MKparams->parties; ++i)
+        {
+            for (int j = 0; j < dg; ++j)
+            {
+                is.read((char *) &Pkey[i*dg + j].N, sizeof(int32_t));
+                const int32_t N = Pkey[i*dg + j].N;
+                Torus32 *__restrict r = Pkey[i*dg + j].coefsT;
+                for (int32_t l = 0; i < N; ++i){
+                    is.read((char *) &r[l], sizeof(Torus32));
+                }
+            }
+        }
+
+        return is;
+    }
+
 #ifdef __cplusplus
     MKRLweKey(const TLweParams* RLWEparams, const MKTFHEParams* MKparams);
     ~MKRLweKey();
@@ -268,6 +360,160 @@ struct MKLweBootstrappingKey_v2{
     const MKTFHEParams* MKparams;
     MKTGswUESample_v2* bk;
     LweKeySwitchKey* ks; //MKLweKeySwitchKey* ks;
+
+    std::ostream& serialize(std::ostream& os) const {
+        // MKparams
+        os.write((char *) &MKparams->n,	sizeof( int32_t));// LWE modulus
+        os.write((char *) &MKparams->n_extract,	sizeof( int32_t));// LWE extract modulus (used in bootstrapping)
+        os.write((char *) &MKparams->hLWE,			sizeof( int32_t));// HW secret key LWE
+        os.write((char *) &MKparams->stdevLWE,		sizeof( double ));// LWE ciphertexts standard deviation
+        os.write((char *) &MKparams->Bksbit,		sizeof( int32_t));// Base bit key switching
+        os.write((char *) &MKparams->dks,			sizeof( int32_t));// dimension key switching
+        os.write((char *) &MKparams->stdevKS,		sizeof( double ));// KS key standard deviation
+        os.write((char *) &MKparams->N,			sizeof( int32_t));// RLWE,RGSW modulus
+        os.write((char *) &MKparams->hRLWE,		sizeof( int32_t));// HW secret key RLWE,RGSW
+        os.write((char *) &MKparams->stdevRLWEkey,	sizeof( double ));// RLWE key standard deviation
+        os.write((char *) &MKparams->stdevRLWE,	sizeof( double ));	// RLWE ciphertexts standard deviation
+        os.write((char *) &MKparams->stdevRGSW,	sizeof( double ));	// RGSW ciphertexts standard deviation
+        os.write((char *) &MKparams->Bgbit,		sizeof( int32_t));// Base bit gadget
+        os.write((char *) &MKparams->dg,			sizeof( int32_t));// dimension gadget
+        os.write((char *) &MKparams->stdevBK,		sizeof( double ));// BK standard deviation
+        os.write((char *) &MKparams->parties,		sizeof( int32_t));// number of parties
+        os.write((char *) &MKparams->maskMod,		sizeof(uint32_t));// Bg - 1
+        os.write((char *) &MKparams->halfBg,		sizeof( int32_t));// Bg/2
+        os.write((char *) MKparams->g,		sizeof( Torus32));// Bg/2
+        os.write((char *) &MKparams->offset,		sizeof( uint32_t));// offset = Bg/2 * (2^(32-Bgbit) + 2^(32-2*Bgbit) + ... + 2^(32-l*Bgbit))
+
+        //bootstrapping key
+        const int32_t n = MKparams->n;
+        const int32_t parties = MKparams->parties;
+        for (int i = 0; i < parties; ++i)
+        {
+            for (int j = 0; j < n; ++j)
+            {
+                MKTGswUESample_v2* bk_i = &bk[i*n+j];
+
+                os.write((char *) &bk_i->party,		sizeof( int32_t));
+                os.write((char *) &bk_i->current_variance,		sizeof( double));
+                os.write((char *) &bk_i->dg,		sizeof( int32_t));
+                os.write((char *) &bk_i->N,		sizeof( int32_t));
+
+                for (int l = 0; l < 3 * bk_i->dg; l++) {
+                    os.write((char *) &bk_i->d[l], sizeof(TorusPolynomial));
+                }
+//                f0 = d + dg;
+//                f1 = d + 2*dg;
+            }
+        }
+
+        //ksk
+        for (int p = 0; p < parties; ++p)
+        {
+            LweKeySwitchKey* ks_i = &ks[p];
+            const int32_t t = ks_i->t;
+            const int32_t base = ks_i->base;
+
+            os.write((char *) &ks_i->n,		sizeof( int32_t));
+            os.write((char *) &ks_i->t,        sizeof( int32_t));
+            os.write((char *) &ks_i->basebit,  sizeof( int32_t));
+            os.write((char *) &ks_i->base,		sizeof( int32_t));
+
+
+            for (int32_t i = 0; i < n; ++i) {
+                for (int32_t j = 0; j < t; ++j) {
+                    for (int32_t h = 0; h < base; ++h) {
+                        os.write((char *) &ks_i->ks[i][j][h].current_variance,		sizeof( double));
+                        os.write((char *) &ks_i->ks[i][j][h].b,		sizeof( Torus32));
+
+                        for (int32_t z = 0; z < n; ++z)
+                        {
+                            os.write((char *) &ks_i->ks[i][j][h].a[z],		sizeof( Torus32));
+                        }
+                    }
+                }
+            }
+
+        }
+
+        return os;
+    }
+
+    std::istream& deserialize(std::istream& is) {
+        // MKparams
+        is.read((char *) &MKparams->n, sizeof( int32_t));// LWE modulus
+        is.read((char *) &MKparams->n_extract, sizeof( int32_t));// LWE extract modulus (used in bootstrapping)
+        is.read((char *) &MKparams->hLWE, sizeof( int32_t));// HW secret key LWE
+        is.read((char *) &MKparams->stdevLWE, sizeof( double ));// LWE ciphertexts standard deviation
+        is.read((char *) &MKparams->Bksbit, sizeof( int32_t));// Base bit key switching
+        is.read((char *) &MKparams->dks, sizeof( int32_t));// dimension key switching
+        is.read((char *) &MKparams->stdevKS, sizeof( double ));// KS key standard deviation
+        is.read((char *) &MKparams->N, sizeof( int32_t));// RLWE,RGSW modulus
+        is.read((char *) &MKparams->hRLWE, sizeof( int32_t));// HW secret key RLWE,RGSW
+        is.read((char *) &MKparams->stdevRLWEkey, sizeof( double ));// RLWE key standard deviation
+        is.read((char *) &MKparams->stdevRLWE, sizeof( double ));	// RLWE ciphertexts standard deviation
+        is.read((char *) &MKparams->stdevRGSW, sizeof( double ));	// RGSW ciphertexts standard deviation
+        is.read((char *) &MKparams->Bgbit, sizeof( int32_t));// Base bit gadget
+        is.read((char *) &MKparams->dg, sizeof( int32_t));// dimension gadget
+        is.read((char *) &MKparams->stdevBK, sizeof( double ));// BK standard deviation
+        is.read((char *) &MKparams->parties, sizeof( int32_t));// number of parties
+        is.read((char *) &MKparams->maskMod, sizeof(uint32_t));// Bg - 1
+        is.read((char *) &MKparams->halfBg, sizeof( int32_t));// Bg/2
+        is.read((char *) MKparams->g, sizeof( Torus32));// Bg/2
+        is.read((char *) &MKparams->offset, sizeof( uint32_t));// offset = Bg/2 * (2^(32-Bgbit) + 2^(32-2*Bgbit) + ... + 2^(32-l*Bgbit))
+
+        //bootstrapping key
+        const int32_t n = MKparams->n;
+        const int32_t parties = MKparams->parties;
+        for (int i = 0; i < parties; ++i)
+        {
+            for (int j = 0; j < n; ++j)
+            {
+                MKTGswUESample_v2* bk_i = &bk[i*n+j];
+
+                is.read((char *) &bk_i->party, sizeof( int32_t));
+                is.read((char *) &bk_i->current_variance, sizeof( double));
+                is.read((char *) &bk_i->dg, sizeof( int32_t));
+                is.read((char *) &bk_i->N, sizeof( int32_t));
+
+                for (int l = 0; l < 3 * bk_i->dg; l++) {
+                    is.read((char *) &bk_i->d[l], sizeof(TorusPolynomial));
+                }
+//                f0 = d + dg;
+//                f1 = d + 2*dg;
+            }
+        }
+
+        //ksk
+        for (int p = 0; p < parties; ++p)
+        {
+            LweKeySwitchKey* ks_i = &ks[p];
+            const int32_t t = ks_i->t;
+            const int32_t base = ks_i->base;
+
+            is.read((char *) &ks_i->n, sizeof( int32_t));
+            is.read((char *) &ks_i->t, sizeof( int32_t));
+            is.read((char *) &ks_i->basebit, sizeof( int32_t));
+            is.read((char *) &ks_i->base, sizeof( int32_t));
+
+
+            for (int32_t i = 0; i < n; ++i) {
+                for (int32_t j = 0; j < t; ++j) {
+                    for (int32_t h = 0; h < base; ++h) {
+                        is.read((char *) &ks_i->ks[i][j][h].current_variance, sizeof( double));
+                        is.read((char *) &ks_i->ks[i][j][h].b, sizeof( Torus32));
+
+                        for (int32_t z = 0; z < n; ++z)
+                        {
+                            is.read((char *) &ks_i->ks[i][j][h].a[z], sizeof( Torus32));
+                        }
+                    }
+                }
+            }
+
+        }
+
+        return is;
+    }
 
 #ifdef __cplusplus
    MKLweBootstrappingKey_v2(const MKTFHEParams* MKparams, MKTGswUESample_v2* bk, 
