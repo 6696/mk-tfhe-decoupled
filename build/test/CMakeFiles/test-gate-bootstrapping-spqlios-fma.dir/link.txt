@@ -1,0 +1,1 @@
+/usr/bin/g++-5   -std=gnu++11 -g3 -O0 -Wall -Werror  -rdynamic CMakeFiles/test-gate-bootstrapping-spqlios-fma.dir/test-gate-bootstrapping.cpp.o  -o test-gate-bootstrapping-spqlios-fma  -Wl,-rpath,/home/daniil/IdeaProjects/mk-tfhe-auction/build/libtfhe ../libtfhe/libtfhe-spqlios-fma.so 

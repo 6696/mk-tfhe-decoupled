@@ -1,0 +1,1 @@
+/usr/bin/g++-5   -std=gnu++11 -g3 -O0 -Wall -Werror  -rdynamic CMakeFiles/testMKbootNAND_FFT_v2___-spqlios-fma.dir/testMKbootNAND_FFT_v2___.cpp.o  -o testMKbootNAND_FFT_v2___-spqlios-fma  -Wl,-rpath,/home/daniil/IdeaProjects/mk-tfhe-auction/build/libtfhe ../libtfhe/libtfhe-spqlios-fma.so 

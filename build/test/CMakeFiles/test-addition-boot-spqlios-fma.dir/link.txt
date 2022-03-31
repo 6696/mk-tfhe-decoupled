@@ -1,0 +1,1 @@
+/usr/bin/g++-5   -std=gnu++11 -g3 -O0 -Wall -Werror  -rdynamic CMakeFiles/test-addition-boot-spqlios-fma.dir/test-addition-boot.cpp.o  -o test-addition-boot-spqlios-fma  -Wl,-rpath,/home/daniil/IdeaProjects/mk-tfhe-auction/build/libtfhe ../libtfhe/libtfhe-spqlios-fma.so 
