@@ -13,6 +13,37 @@ struct MKLweSample {
    	const int32_t parties;
    	const int32_t n;
 
+
+    std::ostream& serialize(std::ostream& os) const {
+        // MKparams
+        os.write((char *) &b,                   sizeof( Torus32 ));
+        os.write((char *) &current_variance,    sizeof( double ));
+        os.write((char *) &parties,             sizeof( int32_t ));
+        os.write((char *) &n,                   sizeof( int32_t ));
+
+        //key
+        for (int i = 0; i < parties * n; i++){
+            os.write((char *) &a[i], sizeof(Torus32));
+        }
+
+        return os;
+    }
+
+    std::istream& deserialize(std::istream& is) {
+        // MKparams
+        is.read((char *) &b,                   sizeof( Torus32 ));
+        is.read((char *) &current_variance,    sizeof( double ));
+        is.read((char *) &parties,             sizeof( int32_t ));
+        is.read((char *) &n,                   sizeof( int32_t ));
+
+        //key
+        for (int i = 0; i < parties * n; i++){
+            is.read((char *) &a[i], sizeof(Torus32));
+        }
+
+        return is;
+    }
+
 #ifdef __cplusplus
    MKLweSample(const LweParams* LWEparams, const MKTFHEParams* MKparams);
    ~MKLweSample();

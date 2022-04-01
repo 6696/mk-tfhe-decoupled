@@ -78,6 +78,7 @@ static void gen_keys(int ID)
     mkdir("./keys", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     // Key generation
     cout << "Starting KEY GENERATION" << endl;
+    //TODO: set random generator
 
     LweParams *extractedLWEparams = new_LweParams(n_extract, ks_stdev, max_stdev);
     LweParams *LWEparams = new_LweParams(n, ks_stdev, max_stdev);
@@ -87,6 +88,7 @@ static void gen_keys(int ID)
     // load common key
     MKRLweKey* dPK = new_MKRLweKey(RLWEparams, MKparams);
     {
+        //TODO: error handling
         fstream myfile = fstream("keys/CommonKey.binary", ios::in | ios::binary);
         dPK->deserialize(myfile);
     }
@@ -141,6 +143,56 @@ static void gen_keys(int ID)
 
 }
 
+static void first_enc_bit(int32_t BIT)
+{
+    // Key generation
+    cout << "Starting BIT ENCRYPTION" << endl;
+
+//    LweParams *extractedLWEparams = new_LweParams(n_extract, ks_stdev, max_stdev);
+    LweParams *LWEparams = new_LweParams(n, ks_stdev, max_stdev);
+    TLweParams *RLWEparams = new_TLweParams(N, k, bk_stdev, max_stdev);
+    MKTFHEParams *MKparams = new_MKTFHEParams(n, n_extract, 0, stdevLWE, Bksbit, dks, stdevKS, N,
+                                              hRLWE, stdevRLWEkey, stdevRLWE, stdevRGSW, Bgbit, dg, stdevBK, parties);
+
+    // LWE key
+    MKLweKey* MKlwekey = new_MKLweKey(LWEparams, MKparams);
+    //        Try deserialization
+    {
+        fstream myfile = fstream("keys/Secret.binary", ios::in | ios::binary);
+        MKlwekey->deserialize(myfile);
+    }
+    cout << "Reading MKlwekey: DONE!" << endl;
+    MKparams->hLWE = MKlwekey->MKparams->hLWE; // set party ID
+
+    MKLweSample *sample = new_MKLweSample(LWEparams, MKparams);
+
+    MKbootsSymEncryptSingleFirst(sample, BIT, MKlwekey);
+
+    //        Try serialization
+    {
+        char buffer [50];
+        sprintf (buffer, "sample%d.binary", MKlwekey->MKparams->hLWE + 1);
+        fstream myfile = fstream(buffer, ios::out | ios::binary);
+        sample->serialize(myfile);
+    }
+    cout << "First encryption: DONE!" << endl;
+    cout << "Starting BIT ENCRYPTION" << endl;
+
+    delete_MKLweKey(MKlwekey);
+    // delete params
+    delete_MKTFHEParams(MKparams);
+    delete_TLweParams(RLWEparams);
+    delete_LweParams(LWEparams);
+}
+
+static void show_usage(string name)
+{
+    cerr << "Usage: " << name << " OPTION\n"
+         << "Options:\n"
+         << "\tg (1 | 2 | 3 | 4)\tGenerate keys for party with ID - Secret key, Public key, Bootstrapping key, KeySwitching key" << endl
+         << "\te (0 | 1)\tEncrypt bit and save it" << endl
+         << endl;
+}
 
 int32_t main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -152,18 +204,25 @@ int32_t main(int argc, char* argv[]) {
 
     switch (*argv[1])
     {
-        default:
+        default: {
             printf("Unknown option -%c\n\n", (*argv)[1]);
             break;
-        case 'e':
-            printf("\n option e is found");
+        }
+        case 'e': {
+            string BIT = argv[2];
+            if (BIT == "0")
+                first_enc_bit(0);
+            else
+                first_enc_bit(1);
             break;
-        case 'd':
+        }
+        case 'd': {
             printf("\n option d is found");
             break;
-        case 'g':
+        }
+        case 'g': {
             string ID = argv[2];
-            if (ID == "1"){
+            if (ID == "1") {
                 gen_keys(0);
             } else if (ID == "2") {
                 gen_keys(1);
@@ -177,6 +236,7 @@ int32_t main(int argc, char* argv[]) {
             }
             return 0;
             break;
+        }
     }
 
 

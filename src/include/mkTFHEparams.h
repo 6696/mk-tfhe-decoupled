@@ -11,7 +11,7 @@
 struct MKTFHEParams{
 	const int32_t n;			// LWE modulus
 	const int32_t n_extract;	// LWE extract modulus (used in bootstrapping)
-	const int32_t hLWE;			// HW secret key LWE
+    int32_t hLWE;			// HW secret key LWE
 	const double stdevLWE;		// LWE ciphertexts standard deviation
 	const int32_t Bksbit;		// Base bit key switching
 	const int32_t dks;			// dimension key switching
