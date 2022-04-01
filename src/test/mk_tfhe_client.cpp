@@ -90,7 +90,7 @@ static void gen_keys(int ID)
     //TODO: error handlingd
     dPK->deserialize("keys/CommonKey.binary");
 
-    MKparams->hLWE = ID;
+    MKparams->hLWE = ID - 1;
     cout << "Reading \"CommonKey.binary\": DONE!" << endl;
 
     // LWE key
@@ -134,10 +134,10 @@ static void gen_keys(int ID)
 
 }
 
-static void first_enc_bit(int32_t BIT)
+static void first_enc_bits(string BITS)
 {
     // Key generation
-    cout << "Starting BIT ENCRYPTION" << endl;
+    cout << "Starting FIRST BIT ENCRYPTION" << endl;
 
 //    LweParams *extractedLWEparams = new_LweParams(n_extract, ks_stdev, max_stdev);
     LweParams *LWEparams = new_LweParams(n, ks_stdev, max_stdev);
@@ -151,18 +151,23 @@ static void first_enc_bit(int32_t BIT)
     MKlwekey->deserialize("keys/Secret.binary");
     cout << "Reading MKlwekey: DONE!" << endl;
 
-    MKLweSample *sample = new_MKLweSample(LWEparams, MKparams);
-
-    MKbootsSymEncryptSingleFirst(sample, BIT, MKlwekey);
-
-    //        Try serialization
     {
         char buffer [50];
-        sprintf (buffer, "sample%d.binary", MKlwekey->MKparams->hLWE + 1);
-        sample->serialize(buffer);
+        sprintf (buffer, "sampleSeq%d.binary", MKlwekey->MKparams->hLWE + 1);
+        fstream myfile = fstream(buffer, ios::out | ios::binary);
+
+        for (uint i = 0; i < BITS.size(); i++) {
+            MKLweSample *sample = new_MKLweSample(LWEparams, MKparams);
+            if (BITS[i] == '0') {
+                MKbootsSymEncryptSingleFirst(sample, 0, MKlwekey);
+            } else {
+                MKbootsSymEncryptSingleFirst(sample, 1, MKlwekey);
+            }
+            sample->serialize(&myfile);
+        }
     }
+
     cout << "First encryption: DONE!" << endl;
-    cout << "Starting BIT ENCRYPTION" << endl;
 
     delete_MKLweKey(MKlwekey);
     // delete params
@@ -171,10 +176,10 @@ static void first_enc_bit(int32_t BIT)
     delete_LweParams(LWEparams);
 }
 
-static void next_enc_bit(string path)
+static void next_enc_bits(string path, int32_t b)
 {
     // Key generation
-    cout << "Starting BIT ENCRYPTION" << endl;
+    cout << "Starting NEXT BIT ENCRYPTION" << endl;
 
 //    LweParams *extractedLWEparams = new_LweParams(n_extract, ks_stdev, max_stdev);
     LweParams *LWEparams = new_LweParams(n, ks_stdev, max_stdev);
@@ -188,15 +193,94 @@ static void next_enc_bit(string path)
     MKlwekey->deserialize("keys/Secret.binary");
     cout << "Reading MKlwekey: DONE!" << endl;
 
-    MKLweSample *sample = new_MKLweSample(LWEparams, MKparams);
-    //        Try deserialization
-    sample->deserialize(path);
-    MKbootsSymEncryptSingle(sample, MKlwekey);
-    //        Try serialization
-    sample->serialize(path);
+    {
+        fstream myfile = fstream(path, ios::out | ios::in | ios::binary);
 
-    cout << "First encryption: DONE!" << endl;
-    cout << "Starting BIT ENCRYPTION" << endl;
+        for (int i = 0; i < b; i++) {
+            MKLweSample *sample = new_MKLweSample(LWEparams, MKparams);
+            sample->deserialize(&myfile);
+            MKbootsSymEncryptSingle(sample, MKlwekey);
+            sample->serialize(&myfile);
+        }
+    }
+
+    cout << "Next bit encryption: DONE!" << endl;
+
+    delete_MKLweKey(MKlwekey);
+    // delete params
+    delete_MKTFHEParams(MKparams);
+    delete_TLweParams(RLWEparams);
+    delete_LweParams(LWEparams);
+}
+
+static void next_dec_bits(string path, int32_t b)
+{
+    // Key generation
+    cout << "Starting BIT DECRYPTION" << endl;
+
+//    LweParams *extractedLWEparams = new_LweParams(n_extract, ks_stdev, max_stdev);
+    LweParams *LWEparams = new_LweParams(n, ks_stdev, max_stdev);
+    TLweParams *RLWEparams = new_TLweParams(N, k, bk_stdev, max_stdev);
+    MKTFHEParams *MKparams = new_MKTFHEParams(n, n_extract, 0, stdevLWE, Bksbit, dks, stdevKS, N,
+                                              hRLWE, stdevRLWEkey, stdevRLWE, stdevRGSW, Bgbit, dg, stdevBK, parties);
+
+    // LWE key
+    MKLweKey* MKlwekey = new_MKLweKey(LWEparams, MKparams);
+    //        Try deserialization
+    MKlwekey->deserialize("keys/Secret.binary");
+    cout << "Reading MKlwekey: DONE!" << endl;
+
+    {
+        fstream myfile = fstream(path, ios::out | ios::in | ios::binary);
+
+        for (int i = 0; i < b; i++) {
+            MKLweSample *sample = new_MKLweSample(LWEparams, MKparams);
+            sample->deserialize(&myfile);
+            MKbootsSymDecryptSingle(sample, MKlwekey);
+            sample->serialize(&myfile);
+        }
+    }
+
+    cout << "Next decryption: DONE!" << endl;
+
+    delete_MKLweKey(MKlwekey);
+    // delete params
+    delete_MKTFHEParams(MKparams);
+    delete_TLweParams(RLWEparams);
+    delete_LweParams(LWEparams);
+}
+
+static void finalize_bits(string path, int32_t b)
+{
+    // Key generation
+    cout << "Starting BIT ENCRYPTION FINALIZATION" << endl;
+
+//    LweParams *extractedLWEparams = new_LweParams(n_extract, ks_stdev, max_stdev);
+    LweParams *LWEparams = new_LweParams(n, ks_stdev, max_stdev);
+    TLweParams *RLWEparams = new_TLweParams(N, k, bk_stdev, max_stdev);
+    MKTFHEParams *MKparams = new_MKTFHEParams(n, n_extract, 0, stdevLWE, Bksbit, dks, stdevKS, N,
+                                              hRLWE, stdevRLWEkey, stdevRLWE, stdevRGSW, Bgbit, dg, stdevBK, parties);
+
+    // LWE key
+    MKLweKey* MKlwekey = new_MKLweKey(LWEparams, MKparams);
+    //        Try deserialization
+    MKlwekey->deserialize("keys/Secret.binary");
+    cout << "Reading MKlwekey: DONE!" << endl;
+
+    {
+        fstream myfile = fstream(path, ios::out | ios::in | ios::binary);
+        cout << "Finalized result: " << endl;
+
+        for (int i = 0; i < b; i++) {
+            MKLweSample *sample = new_MKLweSample(LWEparams, MKparams);
+            sample->deserialize(&myfile);
+            cout << MKbootsSymDecryptSingleFinalize(sample);
+            sample->serialize(&myfile);
+        }
+        cout << endl;
+    }
+
+    cout << "Bit decrypt finaliztion: DONE!" << endl;
 
     delete_MKLweKey(MKlwekey);
     // delete params
@@ -208,10 +292,14 @@ static void next_enc_bit(string path)
 static void show_usage(string name)
 {
     cerr << "Usage: " << name << " OPTION\n"
-         << "Options:\n"
-         << "\tg (1 | 2 | 3 | 4)\tGenerate keys for party with ID - Secret key, Public key, Bootstrapping key, KeySwitching key" << endl
-         << "\te (0 | 1)\tEncrypt bit and save it" << endl
-         << endl;
+    << "Options:\n"
+    << "\tg (1 | 2 | 3 | 4)\tGenerate keys for party with ID - Secret, Public, Bootstrapping, KeySwitching" << endl
+    << "\te (0 | 1)*\tCreate encrypted bit string (6 bits, ex. 101001)" << endl
+    << "\tn /dat.binary\tContinue encryption of bit string" << endl
+    << "\td /dat.binary\tContinue decryption of bit string" << endl
+    << "\tf /dat.binary\tFinalize decryption and print out result" << endl
+//    << "\te (0 | 1)*\tEncrypt bit string (6 bits, ex. 101001) and save it" << endl
+    << endl;
 }
 
 int32_t main(int argc, char* argv[]) {
@@ -229,32 +317,30 @@ int32_t main(int argc, char* argv[]) {
             break;
         }
         case 'e': {
-            string BIT = argv[2];
-            if (BIT == "0")
-                first_enc_bit(0);
-            else
-                first_enc_bit(1);
+            first_enc_bits(argv[2]);
             break;
         }
         case 'n': {
-            next_enc_bit(argv[2]);
+            next_enc_bits(argv[2], 6);
+            break;
+        }
+        case 'f': {
+            finalize_bits(argv[2], 6);
+            break;
+        }
+        case 'd': {
+            next_dec_bits(argv[2], 6);
             break;
         }
         case 'g': {
             string ID = argv[2];
-            if (ID == "1") {
-                gen_keys(0);
-            } else if (ID == "2") {
-                gen_keys(1);
-            } else if (ID == "3") {
-                gen_keys(2);
-            } else if (ID == "4") {
-                gen_keys(3);
+            int id = std::stoi(ID);
+            if (id >= 1 && id <= 4) {
+                gen_keys(id);
             } else {
-                cout << endl << "IDs 1-4 are supported only" << endl;
+                cerr << endl << "IDs 1-4 are supported only" << endl;
                 return 1;
             }
-            return 0;
             break;
         }
     }
