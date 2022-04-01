@@ -87,31 +87,24 @@ static void gen_keys(int ID)
                                               hRLWE, stdevRLWEkey, stdevRLWE, stdevRGSW, Bgbit, dg, stdevBK, parties);
     // load common key
     MKRLweKey* dPK = new_MKRLweKey(RLWEparams, MKparams);
-    {
-        //TODO: error handling
-        fstream myfile = fstream("keys/CommonKey.binary", ios::in | ios::binary);
-        dPK->deserialize(myfile);
-    }
+    //TODO: error handlingd
+    dPK->deserialize("keys/CommonKey.binary");
+
     MKparams->hLWE = ID;
     cout << "Reading \"CommonKey.binary\": DONE!" << endl;
 
     // LWE key
     MKLweKey* MKlwekey = new_MKLweKey(LWEparams, MKparams);
     MKLweKeyGenSingle(MKlwekey);
-    {
-        fstream myfile = fstream("keys/Secret.binary", ios::out | ios::binary);
-        MKlwekey->serialize(myfile);
-    }
+    MKlwekey->serialize("keys/Secret.binary");
     cout << "KeyGen MKlwekey: DONE!" << endl;
 
     // RLWE key
     MKRLweKey* MKrlwekey = new_MKRLweKey(RLWEparams, MKparams);
     MKRLweKeyGenSingle(MKrlwekey, dPK);
     //        Try serialization
-    {
-        fstream myfile = fstream("keys/Public.binary", ios::out | ios::binary);
-        MKrlwekey->serialize(myfile);
-    }
+    MKrlwekey->serialize("keys/Public.binary");
+
     cout << "KeyGen MKRlwekey: DONE!" << endl;
 
     // LWE key extracted
@@ -124,10 +117,8 @@ static void gen_keys(int ID)
     MKlweCreateBootstrappingKey_v2Single(MKlweBK, MKlwekey, MKrlwekey, MKextractedlwekey,
                                          extractedLWEparams, LWEparams, RLWEparams, MKparams);
     //        Try serialization
-    {
-        fstream myfile = fstream("keys/KSKBSK.binary", ios::out | ios::binary);
-        MKlweBK->serialize(myfile);
-    }
+    MKlweBK->serialize("keys/KSKBSK.binary");
+
     cout << "KeyGen MKlweBK: DONE!" << endl;
     cout << "Finished KEY GENERATION" << endl;
 
@@ -157,12 +148,8 @@ static void first_enc_bit(int32_t BIT)
     // LWE key
     MKLweKey* MKlwekey = new_MKLweKey(LWEparams, MKparams);
     //        Try deserialization
-    {
-        fstream myfile = fstream("keys/Secret.binary", ios::in | ios::binary);
-        MKlwekey->deserialize(myfile);
-    }
+    MKlwekey->deserialize("keys/Secret.binary");
     cout << "Reading MKlwekey: DONE!" << endl;
-    MKparams->hLWE = MKlwekey->MKparams->hLWE; // set party ID
 
     MKLweSample *sample = new_MKLweSample(LWEparams, MKparams);
 
@@ -172,9 +159,42 @@ static void first_enc_bit(int32_t BIT)
     {
         char buffer [50];
         sprintf (buffer, "sample%d.binary", MKlwekey->MKparams->hLWE + 1);
-        fstream myfile = fstream(buffer, ios::out | ios::binary);
-        sample->serialize(myfile);
+        sample->serialize(buffer);
     }
+    cout << "First encryption: DONE!" << endl;
+    cout << "Starting BIT ENCRYPTION" << endl;
+
+    delete_MKLweKey(MKlwekey);
+    // delete params
+    delete_MKTFHEParams(MKparams);
+    delete_TLweParams(RLWEparams);
+    delete_LweParams(LWEparams);
+}
+
+static void next_enc_bit(string path)
+{
+    // Key generation
+    cout << "Starting BIT ENCRYPTION" << endl;
+
+//    LweParams *extractedLWEparams = new_LweParams(n_extract, ks_stdev, max_stdev);
+    LweParams *LWEparams = new_LweParams(n, ks_stdev, max_stdev);
+    TLweParams *RLWEparams = new_TLweParams(N, k, bk_stdev, max_stdev);
+    MKTFHEParams *MKparams = new_MKTFHEParams(n, n_extract, 0, stdevLWE, Bksbit, dks, stdevKS, N,
+                                              hRLWE, stdevRLWEkey, stdevRLWE, stdevRGSW, Bgbit, dg, stdevBK, parties);
+
+    // LWE key
+    MKLweKey* MKlwekey = new_MKLweKey(LWEparams, MKparams);
+    //        Try deserialization
+    MKlwekey->deserialize("keys/Secret.binary");
+    cout << "Reading MKlwekey: DONE!" << endl;
+
+    MKLweSample *sample = new_MKLweSample(LWEparams, MKparams);
+    //        Try deserialization
+    sample->deserialize(path);
+    MKbootsSymEncryptSingle(sample, MKlwekey);
+    //        Try serialization
+    sample->serialize(path);
+
     cout << "First encryption: DONE!" << endl;
     cout << "Starting BIT ENCRYPTION" << endl;
 
@@ -216,8 +236,8 @@ int32_t main(int argc, char* argv[]) {
                 first_enc_bit(1);
             break;
         }
-        case 'd': {
-            printf("\n option d is found");
+        case 'n': {
+            next_enc_bit(argv[2]);
             break;
         }
         case 'g': {

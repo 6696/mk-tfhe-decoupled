@@ -183,18 +183,11 @@ int32_t main(int32_t argc, char **argv) {
     //TODO: merge BSK, KSK
     std::vector<MKLweBootstrappingKey_v2*> keysArray;
     //        Try serialization
-    {
-        std::fstream myfile;
-        myfile = std::fstream("dMKlweBK1.binary", std::ios::out | std::ios::binary);
-        MKlweBK1->serialize(myfile);
-    }
+    MKlweBK1->serialize("dMKlweBK1.binary");
     //        Try deserialization
     MKLweBootstrappingKey_v2* dMKlweBK1 = new_MKLweBootstrappingKey_v2(LWEparams, RLWEparams, MKparams1);
-    {
-        std::fstream myfile;
-        myfile = std::fstream("dMKlweBK1.binary", std::ios::in | std::ios::binary);
-        dMKlweBK1->deserialize(myfile);
-    }
+    dMKlweBK1->deserialize("dMKlweBK1.binary");
+
     keysArray.push_back(dMKlweBK1);
     keysArray.push_back(MKlweBK2);
     MKLweBootstrappingKey_v2* MKlweBK = new_MKLweBootstrappingKey_v2Merged(keysArray, MKparams1, LWEparams, RLWEparams);
@@ -203,18 +196,12 @@ int32_t main(int32_t argc, char **argv) {
     //TODO: merge PK
     std::vector<MKRLweKey*> PKArray;
     //        Try serialization
-    {
-        std::fstream myfile;
-        myfile = std::fstream("rlwekey1.binary", std::ios::out | std::ios::binary);
-        MKrlwekey1->serialize(myfile);
-    }
+    MKrlwekey1->serialize("rlwekey1.binary");
+
     //        Try deserialization
     MKRLweKey* dRLWEKey1 = new_MKRLweKey(RLWEparams, MKparams1);
-    {
-        std::fstream myfile;
-        myfile = std::fstream("rlwekey1.binary", std::ios::in | std::ios::binary);
-        dRLWEKey1->deserialize(myfile);
-    }
+    dRLWEKey1->deserialize("rlwekey1.binary");
+
     PKArray.push_back(dRLWEKey1);
     PKArray.push_back(MKrlwekey2);
     MKRLweKey* MKrlwekey_merged = MKRLweKeyMerge(PKArray, RLWEparams, MKparams1);
@@ -241,11 +228,7 @@ int32_t main(int32_t argc, char **argv) {
 //        int32_t mess1_dec = MKbootsSymDecryptSingleFinalize(test_in1);
 
         //        Try serialization
-        {
-            std::fstream myfile;
-            myfile = std::fstream("key1.binary", std::ios::out | std::ios::binary);
-            MKlwekey1->serialize(myfile);
-        }
+        MKlwekey1->serialize("key1.binary");
 //        {
 //            std::fstream myfile;
 //            myfile = std::fstream("key2.binary", std::ios::out | std::ios::binary);
@@ -254,11 +237,7 @@ int32_t main(int32_t argc, char **argv) {
 
         //        Try deserialization
         MKLweKey* deserializedKey1 = new_MKLweKey(LWEparams, MKparams1);
-        {
-            std::fstream myfile;
-            myfile = std::fstream("key1.binary", std::ios::in | std::ios::binary);
-            deserializedKey1->deserialize(myfile);
-        }
+        deserializedKey1->deserialize("key1.binary");
         //        Try deserialization
 //        MKLweKey* deserializedKey2 = new_MKLweKey(LWEparams, MKparams2);
 //        {

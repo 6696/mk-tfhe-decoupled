@@ -15,7 +15,8 @@ struct MKLweKey {
 
    LweKey* key; // LWE secret keys for all the parties
 
-    std::ostream& serialize(std::ostream& os) const {
+    void serialize(std::string path) {
+        std::fstream os = std::fstream(path, std::ios::out | std::ios::binary);
         // LWEparams
         os.write((char *) LWEparams, sizeof(LweParams));
 
@@ -48,11 +49,10 @@ struct MKLweKey {
             os.write((char *) key[i].params, sizeof(LweParams));
             os.write((char *) key[i].key, sizeof(int32_t) * key[i].params->n);
         }
-
-        return os;
     }
 
-    std::istream& deserialize(std::istream& is) {
+    void deserialize(std::string path) {
+        std::fstream is = std::fstream(path, std::ios::in | std::ios::binary);
 
         // LWEparams
         is.read((char *) LWEparams, sizeof(LweParams));
@@ -84,8 +84,6 @@ struct MKLweKey {
             is.read((char *) key[i].params, sizeof(LweParams));
             is.read((char *) key[i].key, sizeof(int32_t) * key[i].params->n);
         }
-
-        return is;
     }
 
 #ifdef __cplusplus   
@@ -144,7 +142,8 @@ struct MKRLweKey {
     TorusPolynomial* Pkey; // RLWE public keys for all the parties
 
 
-    std::ostream& serialize(std::ostream& os) const {
+    void serialize(std::string path) {
+        std::fstream os = std::fstream(path, std::ios::out | std::ios::binary);
         // LWEparams
         os.write((char *) RLWEparams, sizeof(TLweParams));
 
@@ -184,11 +183,10 @@ struct MKRLweKey {
                 }
             }
         }
-
-        return os;
     }
 
-    std::istream& deserialize(std::istream& is) {
+    void deserialize(std::string path) {
+        std::fstream is = std::fstream(path, std::ios::in | std::ios::binary);
 
         // LWEparams
         is.read((char *) RLWEparams, sizeof(TLweParams));
@@ -229,8 +227,6 @@ struct MKRLweKey {
                 }
             }
         }
-
-        return is;
     }
 
 #ifdef __cplusplus
@@ -361,7 +357,8 @@ struct MKLweBootstrappingKey_v2{
     MKTGswUESample_v2* bk;
     LweKeySwitchKey* ks; //MKLweKeySwitchKey* ks;
 
-    std::ostream& serialize(std::ostream& os) const {
+    void serialize(std::string path) {
+        std::fstream os = std::fstream(path, std::ios::out | std::ios::binary);
         // MKparams
         os.write((char *) &MKparams->n,	sizeof( int32_t));// LWE modulus
         os.write((char *) &MKparams->n_extract,	sizeof( int32_t));// LWE extract modulus (used in bootstrapping)
@@ -434,11 +431,10 @@ struct MKLweBootstrappingKey_v2{
             }
 
         }
-
-        return os;
     }
 
-    std::istream& deserialize(std::istream& is) {
+    void deserialize(std::string path) {
+        std::fstream is = std::fstream(path, std::ios::in | std::ios::binary);
         // MKparams
         is.read((char *) &MKparams->n, sizeof( int32_t));// LWE modulus
         is.read((char *) &MKparams->n_extract, sizeof( int32_t));// LWE extract modulus (used in bootstrapping)
@@ -512,7 +508,6 @@ struct MKLweBootstrappingKey_v2{
 
         }
 
-        return is;
     }
 
 #ifdef __cplusplus

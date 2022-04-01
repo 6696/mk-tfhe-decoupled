@@ -2,7 +2,7 @@
 #define MKTFHESAMPLES_H
 
 #include "tfhe_core.h"
-
+#include <fstream>
 
 
 // MK LWE sample (a_1, ..., a_k, b)
@@ -14,7 +14,8 @@ struct MKLweSample {
    	const int32_t n;
 
 
-    std::ostream& serialize(std::ostream& os) const {
+    void serialize(std::string path) {
+        std::fstream os = std::fstream(path, std::ios::out | std::ios::binary);
         // MKparams
         os.write((char *) &b,                   sizeof( Torus32 ));
         os.write((char *) &current_variance,    sizeof( double ));
@@ -25,11 +26,10 @@ struct MKLweSample {
         for (int i = 0; i < parties * n; i++){
             os.write((char *) &a[i], sizeof(Torus32));
         }
-
-        return os;
     }
 
-    std::istream& deserialize(std::istream& is) {
+    void deserialize(std::string path) {
+        std::fstream is = std::fstream(path, std::ios::in | std::ios::binary);
         // MKparams
         is.read((char *) &b,                   sizeof( Torus32 ));
         is.read((char *) &current_variance,    sizeof( double ));
@@ -40,8 +40,6 @@ struct MKLweSample {
         for (int i = 0; i < parties * n; i++){
             is.read((char *) &a[i], sizeof(Torus32));
         }
-
-        return is;
     }
 
 #ifdef __cplusplus
