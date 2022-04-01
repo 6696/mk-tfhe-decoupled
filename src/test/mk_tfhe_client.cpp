@@ -72,14 +72,6 @@ void dieDramatically(string message) {
     abort();
 }
 
-static void show_usage(string name)
-{
-    cerr << "Usage: " << name << " OPTION\n"
-              << "Options:\n"
-              << "\tg ID\tGenerate keys for party with ID - Secret key, Public key, Bootstrapping key, KeySwitching key"
-              << endl;
-}
-
 static void gen_keys(int ID)
 {
     cout << "Create keys folder" << endl;
@@ -90,22 +82,22 @@ static void gen_keys(int ID)
     LweParams *extractedLWEparams = new_LweParams(n_extract, ks_stdev, max_stdev);
     LweParams *LWEparams = new_LweParams(n, ks_stdev, max_stdev);
     TLweParams *RLWEparams = new_TLweParams(N, k, bk_stdev, max_stdev);
-    MKTFHEParams *MKparams = new_MKTFHEParams(n, n_extract, ID, stdevLWE, Bksbit, dks, stdevKS, N,
-                                               hRLWE, stdevRLWEkey, stdevRLWE, stdevRGSW, Bgbit, dg, stdevBK, parties);
+    MKTFHEParams *MKparams = new_MKTFHEParams(n, n_extract, 0, stdevLWE, Bksbit, dks, stdevKS, N,
+                                              hRLWE, stdevRLWEkey, stdevRLWE, stdevRGSW, Bgbit, dg, stdevBK, parties);
     // load common key
     MKRLweKey* dPK = new_MKRLweKey(RLWEparams, MKparams);
     {
         fstream myfile = fstream("keys/CommonKey.binary", ios::in | ios::binary);
         dPK->deserialize(myfile);
     }
+    MKparams->hLWE = ID;
     cout << "Reading \"CommonKey.binary\": DONE!" << endl;
 
     // LWE key
     MKLweKey* MKlwekey = new_MKLweKey(LWEparams, MKparams);
     MKLweKeyGenSingle(MKlwekey);
     {
-        fstream myfile;
-        myfile = fstream("keys/Secret.binary", ios::out | ios::binary);
+        fstream myfile = fstream("keys/Secret.binary", ios::out | ios::binary);
         MKlwekey->serialize(myfile);
     }
     cout << "KeyGen MKlwekey: DONE!" << endl;
@@ -115,8 +107,7 @@ static void gen_keys(int ID)
     MKRLweKeyGenSingle(MKrlwekey, dPK);
     //        Try serialization
     {
-        fstream myfile;
-        myfile = fstream("keys/Public.binary", ios::out | ios::binary);
+        fstream myfile = fstream("keys/Public.binary", ios::out | ios::binary);
         MKrlwekey->serialize(myfile);
     }
     cout << "KeyGen MKRlwekey: DONE!" << endl;
@@ -132,8 +123,7 @@ static void gen_keys(int ID)
                                          extractedLWEparams, LWEparams, RLWEparams, MKparams);
     //        Try serialization
     {
-        fstream myfile;
-        myfile = fstream("keys/KSKBSK.binary", ios::out | ios::binary);
+        fstream myfile = fstream("keys/KSKBSK.binary", ios::out | ios::binary);
         MKlweBK->serialize(myfile);
     }
     cout << "KeyGen MKlweBK: DONE!" << endl;
