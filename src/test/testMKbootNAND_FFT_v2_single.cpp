@@ -69,8 +69,8 @@ int32_t main(int32_t argc, char **argv) {
     static const double stdevRLWEkey = bk_stdev; // 3.29e-10; // 0; // 0.012467;  // RLWE key standard deviation
     static const double stdevRLWE = bk_stdev; // 3.29e-10; // 0; // 0.012467;     // RLWE ciphertexts standard deviation
     static const double stdevRGSW = bk_stdev; // 3.29e-10;     // RGSW ciphertexts standard deviation 
-    static const int32_t Bgbit = 8;        // Base bit gadget
-    static const int32_t dg = 4;           // dimension gadget
+    static const int32_t Bgbit = 9;        // Base bit gadget
+    static const int32_t dg = 3;           // dimension gadget
     static const double stdevBK = bk_stdev; // 3.29e-10;       // BK standard deviation
     static const int32_t parties = 2;      // number of parties
 
@@ -119,8 +119,8 @@ int32_t main(int32_t argc, char **argv) {
     cout << "KeyGen MKlwekey: DONE!" << endl;
 
     // RLWE key
-//    MKRLweKey* PK = new_MKRLweKey(RLWEparams, MKparams1);
-//    MKRLweKeyGenPublic(PK);
+    MKRLweKey* PK = new_MKRLweKey(RLWEparams, MKparams1);
+    MKRLweKeyGenPublic(PK);
 //    //        Try serialization
 //    {
 //        std::fstream myfile;
@@ -128,18 +128,18 @@ int32_t main(int32_t argc, char **argv) {
 //        PK->serialize(myfile);
 //    }
     //        Try deserialization
-    MKRLweKey* dPK = new_MKRLweKey(RLWEparams, MKparams1);
-    {
-        std::fstream myfile;
-        myfile = std::fstream("CommonKey.binary", std::ios::in | std::ios::binary);
-        dPK->deserialize(myfile);
-    }
+//    MKRLweKey* dPK = new_MKRLweKey(RLWEparams, MKparams1);
+//    {
+//        std::fstream myfile;
+//        myfile = std::fstream("CommonKey.binary", std::ios::in | std::ios::binary);
+//        dPK->deserialize(myfile);
+//    }
 
     MKRLweKey* MKrlwekey1 = new_MKRLweKey(RLWEparams, MKparams1);
     MKRLweKey* MKrlwekey2 = new_MKRLweKey(RLWEparams, MKparams2);
     // gen public keys
-    MKRLweKeyGenSingle(MKrlwekey1, dPK);
-    MKRLweKeyGenSingle(MKrlwekey2, dPK);
+    MKRLweKeyGenSingle(MKrlwekey1, PK);
+    MKRLweKeyGenSingle(MKrlwekey2, PK);
     cout << "KeyGen MKrlwekey: DONE!" << endl;
 
     // LWE key extracted 
