@@ -163,6 +163,7 @@ static void first_enc_bits(string BITS)
             } else {
                 MKbootsSymEncryptSingleFirst(sample, 1, MKlwekey);
             }
+            sample->current_variance = stdevLWE*stdevLWE;
             sample->serialize(&myfile);
         }
     }
@@ -193,14 +194,33 @@ static void next_enc_bits(string path, int32_t b)
     MKlwekey->deserialize("keys/Secret.binary");
     cout << "Reading MKlwekey: DONE!" << endl;
 
+//    {
+//        fstream myfile = fstream(path, ios::out | ios::in | ios::binary);
+//
+//        for (int i = 0; i < b; i++) {
+//            MKLweSample *sample = new_MKLweSample(LWEparams, MKparams);
+//            sample->deserialize(&myfile);
+//            MKbootsSymEncryptSingle(sample, MKlwekey);
+//            sample->current_variance = stdevLWE*stdevLWE;
+//            sample->serialize(&myfile);
+//        }
+//    }
+
+    std::vector<MKLweSample *> lweArray;
     {
-        fstream myfile = fstream(path, ios::out | ios::in | ios::binary);
+        fstream infile = fstream(path, ios::in | ios::binary);
 
         for (int i = 0; i < b; i++) {
             MKLweSample *sample = new_MKLweSample(LWEparams, MKparams);
-            sample->deserialize(&myfile);
-            MKbootsSymEncryptSingle(sample, MKlwekey);
-            sample->serialize(&myfile);
+            sample->deserialize(&infile);
+            lweArray.push_back(sample);
+        }
+    }
+    {
+        fstream outfile = fstream(path, ios::out | ios::binary);
+        for (int i = 0; i < b; i++) {
+            MKbootsSymEncryptSingle(lweArray[i], MKlwekey);
+            lweArray[i]->serialize(&outfile);
         }
     }
 
@@ -229,15 +249,21 @@ static void next_dec_bits(string path, int32_t b)
     //        Try deserialization
     MKlwekey->deserialize("keys/Secret.binary");
     cout << "Reading MKlwekey: DONE!" << endl;
-
+    std::vector<MKLweSample *> lweArray;
     {
-        fstream myfile = fstream(path, ios::out | ios::in | ios::binary);
+        fstream infile = fstream(path, ios::in | ios::binary);
 
         for (int i = 0; i < b; i++) {
             MKLweSample *sample = new_MKLweSample(LWEparams, MKparams);
-            sample->deserialize(&myfile);
-            MKbootsSymDecryptSingle(sample, MKlwekey);
-            sample->serialize(&myfile);
+            sample->deserialize(&infile);
+            lweArray.push_back(sample);
+        }
+    }
+    {
+        fstream outfile = fstream(path, ios::out | ios::binary);
+        for (int i = 0; i < b; i++) {
+            MKbootsSymDecryptSingle(lweArray[i], MKlwekey);
+            lweArray[i]->serialize(&outfile);
         }
     }
 
@@ -253,7 +279,7 @@ static void next_dec_bits(string path, int32_t b)
 static void finalize_bits(string path, int32_t b)
 {
     // Key generation
-    cout << "Starting BIT ENCRYPTION FINALIZATION" << endl;
+    cout << "Starting BIT DECRYPTION FINALIZATION" << endl;
 
 //    LweParams *extractedLWEparams = new_LweParams(n_extract, ks_stdev, max_stdev);
     LweParams *LWEparams = new_LweParams(n, ks_stdev, max_stdev);
@@ -275,7 +301,6 @@ static void finalize_bits(string path, int32_t b)
             MKLweSample *sample = new_MKLweSample(LWEparams, MKparams);
             sample->deserialize(&myfile);
             cout << MKbootsSymDecryptSingleFinalize(sample);
-            sample->serialize(&myfile);
         }
         cout << endl;
     }
