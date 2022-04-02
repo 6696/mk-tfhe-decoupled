@@ -11,7 +11,7 @@ done
 
 # create encrypted string for client 1
 cd client1
-../mk_tfhe_client-spqlios-fma e 101001
+../mk_tfhe_client-spqlios-fma e 010101
 cd ..
 
 # encrypt bit sequence with other clients' keys
@@ -35,5 +35,6 @@ do
 done
 
 # finalize bit sequence and show result
-./mk_tfhe_client-spqlios-fma f client1/sampleSeq1.binary
+cd client1
+../mk_tfhe_client-spqlios-fma f sampleSeq1.binary
 
