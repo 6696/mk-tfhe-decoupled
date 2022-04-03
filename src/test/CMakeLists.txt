@@ -42,6 +42,7 @@ set(CPP_ITESTS
         testMKbootNAND_FFT_v2
         testMKbootNAND_FFT_v2_single
         mk_tfhe_client
+        mk_tfhe_server
         )
 
 set(C_ITESTS
