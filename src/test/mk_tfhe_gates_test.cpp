@@ -133,49 +133,6 @@ void THREE_BIT_AND(MKLweSample *result, MKLweSample *ca, MKLweSample *cb, MKLweS
     AND(result, result, cc, params, BK_FFT, PK);
 }
 
-// compares a > b, where a0 ist LSB
-void FOUR_BIT_A_GT_B(MKLweSample *result,
-                         MKLweSample *a0, MKLweSample *a1, MKLweSample *a2, MKLweSample *a3,
-                         MKLweSample *b0, MKLweSample *b1, MKLweSample *b2, MKLweSample *b3,
-                 tuple<LweParams*, LweParams*, TLweParams*, MKTFHEParams*> params,
-                 MKLweBootstrappingKeyFFT_v2* BK_FFT, MKRLweKey* PK){
-    // define vars
-    MKLweSample *not_b0 = new_MKLweSample(get<0>(params), get<3>(params));
-    MKLweSample *not_b1 = new_MKLweSample(get<0>(params), get<3>(params));
-    MKLweSample *not_b2 = new_MKLweSample(get<0>(params), get<3>(params));
-    MKLweSample *not_b3 = new_MKLweSample(get<0>(params), get<3>(params));
-
-    MKLweSample *tmp0 = new_MKLweSample(get<0>(params), get<3>(params));
-    MKLweSample *tmp1 = new_MKLweSample(get<0>(params), get<3>(params));
-    MKLweSample *tmp2 = new_MKLweSample(get<0>(params), get<3>(params));
-    MKLweSample *tmp3 = new_MKLweSample(get<0>(params), get<3>(params));
-
-    MKLweSample *t0 = new_MKLweSample(get<0>(params), get<3>(params));
-    MKLweSample *t1 = new_MKLweSample(get<0>(params), get<3>(params));
-    MKLweSample *t2 = new_MKLweSample(get<0>(params), get<3>(params));
-
-    // init NOT
-    NOT(not_b0, b0, params, BK_FFT, PK);
-    NOT(not_b1, b1, params, BK_FFT, PK);
-    NOT(not_b2, b2, params, BK_FFT, PK);
-    NOT(not_b3, b3, params, BK_FFT, PK);
-
-    // perform xor
-    XOR(t0, b3, a3, params, BK_FFT, PK);
-    XOR(t1, b2, a2, params, BK_FFT, PK);
-    XOR(t2, b1, a1, params, BK_FFT, PK);
-
-    AND(tmp3, a3, not_b3, params, BK_FFT, PK);
-
-    THREE_BIT_AND(tmp2, a2, t0, not_b2, params, BK_FFT, PK);
-
-    FOUR_BIT_AND(tmp1, not_b1, a1, t1, t0, params, BK_FFT, PK);
-
-    FIVE_BIT_AND(tmp0, not_b0, a0, t2, t1, t0, params, BK_FFT, PK);
-
-    FOUR_BIT_OR(result, tmp0, tmp1, tmp2, tmp3, params, BK_FFT, PK);
-}
-
 // **********************************************************************************
 // ********************************* MAIN *******************************************
 // **********************************************************************************
