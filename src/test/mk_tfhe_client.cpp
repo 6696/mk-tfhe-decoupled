@@ -294,7 +294,7 @@ static void finalize_bits(string path, int32_t b)
     cout << "Reading MKlwekey: DONE!" << endl;
 
     {
-        fstream myfile = fstream(path, ios::out | ios::in | ios::binary);
+        fstream myfile = fstream(path, ios::in | ios::binary);
         cout << "Finalized result: " << endl;
 
         for (int i = 0; i < b; i++) {

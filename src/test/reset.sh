@@ -12,3 +12,4 @@ do
 	echo -e '\n'
 done
 
+rm sampleResult.binary

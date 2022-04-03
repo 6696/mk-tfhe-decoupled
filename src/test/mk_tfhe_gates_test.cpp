@@ -85,7 +85,7 @@ void OR(MKLweSample *result, MKLweSample *ca, MKLweSample *cb,
     NAND(result, tmp_a, tmp_b, params, BK_FFT, PK);
 }
 
-void XNOR(MKLweSample *result, MKLweSample *ca, MKLweSample *cb,
+void XOR(MKLweSample *result, MKLweSample *ca, MKLweSample *cb,
          tuple<LweParams*, LweParams*, TLweParams*, MKTFHEParams*> params,
          MKLweBootstrappingKeyFFT_v2* BK_FFT, MKRLweKey* PK){
     MKLweSample *tmp = new_MKLweSample(get<0>(params), get<3>(params));
@@ -98,8 +98,6 @@ void XNOR(MKLweSample *result, MKLweSample *ca, MKLweSample *cb,
     NAND(tmp_b, tmp, cb, params, BK_FFT, PK);
 
     NAND(result, tmp_a, tmp_b, params, BK_FFT, PK);
-
-    NOT(result, result, params, BK_FFT, PK);
 }
 
 void FIVE_BIT_AND(MKLweSample *result, MKLweSample *ca, MKLweSample *cb,
@@ -162,10 +160,10 @@ void FOUR_BIT_A_GT_B(MKLweSample *result,
     NOT(not_b2, b2, params, BK_FFT, PK);
     NOT(not_b3, b3, params, BK_FFT, PK);
 
-    // perform xnor
-    XNOR(t0, b3, a3, params, BK_FFT, PK);
-    XNOR(t1, b2, a2, params, BK_FFT, PK);
-    XNOR(t2, b1, a1, params, BK_FFT, PK);
+    // perform xor
+    XOR(t0, b3, a3, params, BK_FFT, PK);
+    XOR(t1, b2, a2, params, BK_FFT, PK);
+    XOR(t2, b1, a1, params, BK_FFT, PK);
 
     AND(tmp3, a3, not_b3, params, BK_FFT, PK);
 
@@ -249,10 +247,11 @@ static void compute(string path, int32_t b)
         outVector.push_back(out);
     }
 
-    FOUR_BIT_A_GT_B(outVector[0],
-                    sampleVector1[5], sampleVector1[4], sampleVector1[3], sampleVector1[2],
-                    sampleVector2[5], sampleVector2[4], sampleVector2[3], sampleVector2[2],
-                    params, BK_FFT, PK);
+    FOUR_BIT_OR(outVector[0], sampleVector1[0], sampleVector2[0], sampleVector3[0], sampleVector4[0], params, BK_FFT, PK);
+    FOUR_BIT_OR(outVector[1], sampleVector1[1], sampleVector2[1], sampleVector3[1], sampleVector4[1], params, BK_FFT, PK);
+    FOUR_BIT_OR(outVector[2], sampleVector1[2], sampleVector2[2], sampleVector3[2], sampleVector4[2], params, BK_FFT, PK);
+    FOUR_BIT_OR(outVector[3], sampleVector1[3], sampleVector2[3], sampleVector3[3], sampleVector4[3], params, BK_FFT, PK);
+
 
 //    for (int i = 0; i < b; i++) {
 //        FOUR_BIT_AND(outVector[i],sampleVector1[i], sampleVector2[i],
