@@ -3,8 +3,6 @@
 #include "polynomials.h"
 #include "lweparams.h"
 #include "tlwe.h"
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <tuple>
 
 #include "mkTFHEparams.h"
@@ -131,7 +129,7 @@ static void compute(string path, int32_t b)
     vector<MKLweBootstrappingKey_v2 *> bkVector;
     for (int i = 1; i <= 4; i++) {
         MKLweBootstrappingKey_v2 * bk = new_MKLweBootstrappingKey_v2(LWEparams, RLWEparams, MKparams);
-        bk->deserialize("/client" + to_string(i) + "/keys/KSKBSK.binary");
+        bk->deserialize(path + "/client" + to_string(i) + "/keys/KSKBSK.binary");
         bkVector.push_back(bk);
     }
 
@@ -139,7 +137,7 @@ static void compute(string path, int32_t b)
     vector<MKRLweKey *> pkVector;
     for (int i = 1; i <= 4; i++) {
         MKRLweKey* pk = new_MKRLweKey(RLWEparams, MKparams);
-        pk->deserialize("/client" + to_string(i) + "/keys/Public.binary");
+        pk->deserialize(path + "/client" + to_string(i) + "/keys/Public.binary");
         pkVector.push_back(pk);
     }
 
@@ -157,8 +155,9 @@ static void compute(string path, int32_t b)
 
     for (int i = 0; i < b; i++) {
         FOUR_BIT_AND(outVector[i],sampleVector1[i], sampleVector2[i],
-                                        sampleVector3[i], sampleVector4[i],
+                     sampleVector3[i], sampleVector4[i],
                      params, BK_FFT, PK);
+//        AND(outVector[i],sampleVector1[i], sampleVector2[i], params, BK_FFT, PK);
     }
 
     {
