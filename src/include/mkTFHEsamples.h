@@ -16,6 +16,9 @@ struct MKLweSample {
 
     void serialize(std::string path) {
         std::fstream os = std::fstream(path, std::ios::out | std::ios::binary);
+        if (!os){
+            throw std::runtime_error("Could not open file");
+        }
         // MKparams
         os.write((char *) &b,                   sizeof( Torus32 ));
         os.write((char *) &current_variance,    sizeof( double ));
@@ -30,6 +33,9 @@ struct MKLweSample {
 
     void serialize(std::fstream* os) {
         // MKparams
+        if (!os){
+            throw std::runtime_error("Could not open file");
+        }
         os->write((char *) &b,                   sizeof( Torus32 ));
         os->write((char *) &current_variance,    sizeof( double ));
         os->write((char *) &parties,             sizeof( int32_t ));
@@ -43,6 +49,9 @@ struct MKLweSample {
 
     void deserialize(std::fstream* is) {
         // MKparams
+        if (!is){
+            throw std::runtime_error("Could not open file");
+        }
         is->read((char *) &b,                   sizeof( Torus32 ));
         is->read((char *) &current_variance,    sizeof( double ));
         is->read((char *) &parties,             sizeof( int32_t ));
@@ -56,6 +65,9 @@ struct MKLweSample {
 
     void deserialize(std::string path) {
         std::fstream is = std::fstream(path, std::ios::in | std::ios::binary);
+        if (!is){
+            throw std::runtime_error("Could not open file");
+        }
         // MKparams
         is.read((char *) &b,                   sizeof( Torus32 ));
         is.read((char *) &current_variance,    sizeof( double ));

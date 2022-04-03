@@ -359,6 +359,9 @@ struct MKLweBootstrappingKey_v2{
 
     void serialize(std::string path) {
         std::fstream os = std::fstream(path, std::ios::out | std::ios::binary);
+        if (!os){
+            throw std::runtime_error("Could not open file");
+        }
         // MKparams
         os.write((char *) &MKparams->n,	sizeof( int32_t));// LWE modulus
         os.write((char *) &MKparams->n_extract,	sizeof( int32_t));// LWE extract modulus (used in bootstrapping)
@@ -396,7 +399,10 @@ struct MKLweBootstrappingKey_v2{
                 os.write((char *) &bk_i->N,		sizeof( int32_t));
 
                 for (int l = 0; l < 3 * bk_i->dg; l++) {
-                    os.write((char *) &bk_i->d[l], sizeof(TorusPolynomial));
+//                    os.write((char *) &bk_i->d[l], sizeof(TorusPolynomial));
+                    for (int t = 0; t < bk_i->N; t++){
+                        os.write((char *) &bk_i->d[l].coefsT[t], sizeof(Torus32));
+                    }
                 }
 //                f0 = d + dg;
 //                f1 = d + 2*dg;
@@ -435,6 +441,9 @@ struct MKLweBootstrappingKey_v2{
 
     void deserialize(std::string path) {
         std::fstream is = std::fstream(path, std::ios::in | std::ios::binary);
+        if (!is){
+            throw std::runtime_error("Could not open file");
+        }
         // MKparams
         is.read((char *) &MKparams->n, sizeof( int32_t));// LWE modulus
         is.read((char *) &MKparams->n_extract, sizeof( int32_t));// LWE extract modulus (used in bootstrapping)
@@ -472,7 +481,10 @@ struct MKLweBootstrappingKey_v2{
                 is.read((char *) &bk_i->N, sizeof( int32_t));
 
                 for (int l = 0; l < 3 * bk_i->dg; l++) {
-                    is.read((char *) &bk_i->d[l], sizeof(TorusPolynomial));
+//                    os.write((char *) &bk_i->d[l], sizeof(TorusPolynomial));
+                    for (int t = 0; t < bk_i->N; t++){
+                        is.read((char *) &bk_i->d[l].coefsT[t], sizeof(Torus32));
+                    }
                 }
 //                f0 = d + dg;
 //                f1 = d + 2*dg;
