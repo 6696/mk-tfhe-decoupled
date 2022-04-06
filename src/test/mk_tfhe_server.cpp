@@ -46,7 +46,7 @@ static const int32_t parties = 4;      // number of parties
 // 4 parties, B=2^8, d=4 -> works
 // 8 parties, B=2^6, d=5 -> works
 
-/// global vars
+int gates_counter = 0;
 
 // **********************************************************************************
 // ********************************* GATES ******************************************
@@ -58,7 +58,7 @@ void NAND(MKLweSample *result, MKLweSample *ca, MKLweSample *cb,
     MKbootsNAND_FFT_v2m2(result, ca, cb, BK_FFT,
                          get<0>(params), get<1>(params),
                          get<2>(params), get<3>(params), PK);
-    cout << 1 << flush;
+    gates_counter++;
 }
 
 void NOT(MKLweSample *result, MKLweSample *ca,
@@ -72,6 +72,22 @@ void AND(MKLweSample *result, MKLweSample *ca, MKLweSample *cb,
          MKLweBootstrappingKeyFFT_v2* BK_FFT, MKRLweKey* PK){
     NAND(result, ca, cb, params, BK_FFT, PK);
     NOT(result, result, params, BK_FFT, PK);
+}
+
+// selector works as follows:
+// 1 -> ia
+// 0 -> ib
+void MUX(MKLweSample *result, MKLweSample *ia, MKLweSample *ib, MKLweSample *selector,
+         tuple<LweParams*, LweParams*, TLweParams*, MKTFHEParams*> params,
+         MKLweBootstrappingKeyFFT_v2* BK_FFT, MKRLweKey* PK){
+    MKLweSample *tmp_not = new_MKLweSample(get<0>(params), get<3>(params));
+    MKLweSample *t1 = new_MKLweSample(get<0>(params), get<3>(params));
+    MKLweSample *t2 = new_MKLweSample(get<0>(params), get<3>(params));
+
+    NOT(tmp_not, selector, params, BK_FFT, PK);
+    NAND(t1, selector, ia, params, BK_FFT, PK);
+    NAND(t2, tmp_not, ib, params, BK_FFT, PK);
+    NAND(result, t1, t2, params, BK_FFT, PK);
 }
 
 void OR(MKLweSample *result, MKLweSample *ca, MKLweSample *cb,
@@ -129,10 +145,32 @@ void FOUR_BIT_OR(MKLweSample *result, MKLweSample *ca, MKLweSample *cb, MKLweSam
 }
 
 void THREE_BIT_AND(MKLweSample *result, MKLweSample *ca, MKLweSample *cb, MKLweSample *cc,
-                  tuple<LweParams*, LweParams*, TLweParams*, MKTFHEParams*> params,
-                  MKLweBootstrappingKeyFFT_v2* BK_FFT, MKRLweKey* PK){
+                   tuple<LweParams*, LweParams*, TLweParams*, MKTFHEParams*> params,
+                   MKLweBootstrappingKeyFFT_v2* BK_FFT, MKRLweKey* PK){
     AND(result, ca, cb, params, BK_FFT, PK);
     AND(result, result, cc, params, BK_FFT, PK);
+}
+
+void TWO_BIT_MUX(MKLweSample *r0, MKLweSample *r1,
+                 MKLweSample *ca0, MKLweSample *ca1,
+                 MKLweSample *cb0, MKLweSample *cb1,
+                 MKLweSample *selector,
+                 tuple<LweParams*, LweParams*, TLweParams*, MKTFHEParams*> params,
+                 MKLweBootstrappingKeyFFT_v2* BK_FFT, MKRLweKey* PK){
+    MUX(r0, ca0, cb0, selector, params, BK_FFT, PK);
+    MUX(r1, ca1, cb1, selector, params, BK_FFT, PK);
+}
+
+void FOUR_BIT_MUX(MKLweSample *r0, MKLweSample *r1, MKLweSample *r2, MKLweSample *r3,
+                  MKLweSample *a0, MKLweSample *a1, MKLweSample *a2, MKLweSample *a3,
+                  MKLweSample *b0, MKLweSample *b1, MKLweSample *b2, MKLweSample *b3,
+                  MKLweSample *selector,
+                  tuple<LweParams*, LweParams*, TLweParams*, MKTFHEParams*> params,
+                  MKLweBootstrappingKeyFFT_v2* BK_FFT, MKRLweKey* PK){
+    MUX(r0, a0, b0, selector, params, BK_FFT, PK);
+    MUX(r1, a1, b1, selector, params, BK_FFT, PK);
+    MUX(r2, a2, b2, selector, params, BK_FFT, PK);
+    MUX(r3, a3, b3, selector, params, BK_FFT, PK);
 }
 
 // compares a > b, where a0 ist LSB
@@ -176,6 +214,102 @@ void FOUR_BIT_A_GT_B(MKLweSample *result,
     FIVE_BIT_AND(tmp0, not_b0, a0, t2, t1, t0, params, BK_FFT, PK);
 
     FOUR_BIT_OR(result, tmp0, tmp1, tmp2, tmp3, params, BK_FFT, PK);
+}
+
+// a0 is LSB, a5 is MSB
+void C1(MKLweSample *r0, MKLweSample *r1, MKLweSample *r2, MKLweSample *r3, MKLweSample *r4, MKLweSample *r5,
+        MKLweSample *a0, MKLweSample *a1, MKLweSample *a2, MKLweSample *a3, MKLweSample *a4, MKLweSample *a5,
+        MKLweSample *b0, MKLweSample *b1, MKLweSample *b2, MKLweSample *b3, MKLweSample *b4, MKLweSample *b5,
+        tuple<LweParams*, LweParams*, TLweParams*, MKTFHEParams*> params,
+        MKLweBootstrappingKeyFFT_v2* BK_FFT, MKRLweKey* PK){
+    MKLweSample *selector = new_MKLweSample(get<0>(params), get<3>(params));
+
+    FOUR_BIT_A_GT_B(selector,
+                    a0, a1, a2, a3,
+                    b0, b1, b2, b3,
+                    params, BK_FFT, PK);
+
+    FOUR_BIT_MUX(r0, r1, r2, r3,
+                 a0, a1, a2, a3,
+                 b0, b1, b2, b3,
+                 selector,
+                 params, BK_FFT, PK);
+
+    TWO_BIT_MUX(r4, r5,
+                a4, a5,
+                b4, b5,
+                selector,
+                params, BK_FFT, PK);
+}
+
+// a0 is LSB, a5 is MSB
+void C2(MKLweSample *r0, MKLweSample *r1, MKLweSample *r2, MKLweSample *r3, MKLweSample *r4, MKLweSample *r5,
+        MKLweSample *a0, MKLweSample *a1, MKLweSample *a2, MKLweSample *a3, MKLweSample *a4, MKLweSample *a5,
+        MKLweSample *b0, MKLweSample *b1, MKLweSample *b2, MKLweSample *b3, MKLweSample *b4, MKLweSample *b5,
+        tuple<LweParams*, LweParams*, TLweParams*, MKTFHEParams*> params,
+        MKLweBootstrappingKeyFFT_v2* BK_FFT, MKRLweKey* PK){
+    MKLweSample *selector = new_MKLweSample(get<0>(params), get<3>(params));
+
+    FOUR_BIT_A_GT_B(selector,
+                    a0, a1, a2, a3,
+                    b0, b1, b2, b3,
+                    params, BK_FFT, PK);
+
+    // Get the winner...
+    TWO_BIT_MUX(r4, r5,
+                a4, a5,
+                b4, b5,
+                selector,
+                params, BK_FFT, PK);
+
+    // ...but the second-highest price
+    NOT(selector, selector, params, BK_FFT, PK);
+
+    FOUR_BIT_MUX(r0, r1, r2, r3,
+                 a0, a1, a2, a3,
+                 b0, b1, b2, b3,
+                 selector,
+                 params, BK_FFT, PK);
+
+
+}
+
+// a0 is LSB, a5 is MSB
+void V_AUC(MKLweSample *r0, MKLweSample *r1, MKLweSample *r2, MKLweSample *r3, MKLweSample *r4, MKLweSample *r5,
+        MKLweSample *a0, MKLweSample *a1, MKLweSample *a2, MKLweSample *a3, MKLweSample *a4, MKLweSample *a5,
+        MKLweSample *b0, MKLweSample *b1, MKLweSample *b2, MKLweSample *b3, MKLweSample *b4, MKLweSample *b5,
+        MKLweSample *c0, MKLweSample *c1, MKLweSample *c2, MKLweSample *c3, MKLweSample *c4, MKLweSample *c5,
+        MKLweSample *d0, MKLweSample *d1, MKLweSample *d2, MKLweSample *d3, MKLweSample *d4, MKLweSample *d5,
+        tuple<LweParams*, LweParams*, TLweParams*, MKTFHEParams*> params,
+        MKLweBootstrappingKeyFFT_v2* BK_FFT, MKRLweKey* PK){
+    MKLweSample *le0 = new_MKLweSample(get<0>(params), get<3>(params));
+    MKLweSample *le1 = new_MKLweSample(get<0>(params), get<3>(params));
+    MKLweSample *le2 = new_MKLweSample(get<0>(params), get<3>(params));
+    MKLweSample *le3 = new_MKLweSample(get<0>(params), get<3>(params));
+    MKLweSample *le4 = new_MKLweSample(get<0>(params), get<3>(params));
+    MKLweSample *le5 = new_MKLweSample(get<0>(params), get<3>(params));
+
+    MKLweSample *ri0 = new_MKLweSample(get<0>(params), get<3>(params));
+    MKLweSample *ri1 = new_MKLweSample(get<0>(params), get<3>(params));
+    MKLweSample *ri2 = new_MKLweSample(get<0>(params), get<3>(params));
+    MKLweSample *ri3 = new_MKLweSample(get<0>(params), get<3>(params));
+    MKLweSample *ri4 = new_MKLweSample(get<0>(params), get<3>(params));
+    MKLweSample *ri5 = new_MKLweSample(get<0>(params), get<3>(params));
+
+    C1(le0, le1, le2, le3, le4, le5,
+       a0, a1, a2, a3, a4, a5,
+       b0, b1, b2, b3, b4, b5,
+       params, BK_FFT, PK);
+
+    C1(ri0, ri1, ri2, ri3, ri4, ri5,
+       c0, c1, c2, c3, c4, c5,
+       d0, d1, d2, d3, d4, d5,
+       params, BK_FFT, PK);
+
+    C2(r0, r1, r2, r3, r4, r5,
+       le0, le1, le2, le3, le4, le5,
+       ri0, ri1, ri2, ri3, ri4, ri5,
+       params, BK_FFT, PK);
 }
 
 // **********************************************************************************
@@ -249,17 +383,21 @@ static void compute(string path, int32_t b)
         outVector.push_back(out);
     }
 
-    FOUR_BIT_A_GT_B(outVector[0],
-                    sampleVector1[5], sampleVector1[4], sampleVector1[3], sampleVector1[2],
-                    sampleVector2[5], sampleVector2[4], sampleVector2[3], sampleVector2[2],
-                    params, BK_FFT, PK);
+    clock_t begin = clock();
 
-//    for (int i = 0; i < b; i++) {
-//        FOUR_BIT_AND(outVector[i],sampleVector1[i], sampleVector2[i],
-//                     sampleVector3[i], sampleVector4[i],
-//                     params, BK_FFT, PK);
-//        AND(outVector[i],sampleVector1[i], sampleVector2[i], params, BK_FFT, PK);
-//    }
+    V_AUC(outVector[5], outVector[4], outVector[3], outVector[2], outVector[1], outVector[0],
+       sampleVector1[5], sampleVector1[4], sampleVector1[3], sampleVector1[2], sampleVector1[1], sampleVector1[0],
+       sampleVector2[5], sampleVector2[4], sampleVector2[3], sampleVector2[2], sampleVector2[1], sampleVector2[0],
+       sampleVector3[5], sampleVector3[4], sampleVector3[3], sampleVector3[2], sampleVector3[1], sampleVector3[0],
+       sampleVector4[5], sampleVector4[4], sampleVector4[3], sampleVector4[2], sampleVector4[1], sampleVector4[0],
+       params, BK_FFT, PK);
+
+    clock_t end = clock();
+
+    double elapsed = ((double) end - begin)/CLOCKS_PER_SEC;
+    cout << "Overall time: " << elapsed << "(s)" << endl;
+    cout << "Gates evaluated: " << gates_counter << endl;
+    cout << "Time per gate: " << elapsed/gates_counter << "(s)" << endl;
 
     {
         fstream outfile = fstream(path + "/sampleResult.binary", ios::out | ios::binary);
