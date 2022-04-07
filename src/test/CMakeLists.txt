@@ -44,6 +44,7 @@ set(CPP_ITESTS
         mk_tfhe_client
         mk_tfhe_server
         mk_tfhe_gates_test
+        nand_fft_bench
         )
 
 set(C_ITESTS

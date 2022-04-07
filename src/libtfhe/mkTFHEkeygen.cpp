@@ -458,7 +458,7 @@ EXPORT void init_MKLweBootstrappingKeyFFT_v2(MKLweBootstrappingKeyFFT_v2 *obj,
     int32_t nb_polys = 3*dg;
     MKTGswUESampleFFT_v2 *bkFFT = new_MKTGswUESampleFFT_v2_array(n*parties, RLWEparams, MKparams, 0, 0.0);
     // convert bk to bkFFT
-    clock_t begin = clock();
+//    clock_t begin = clock();
     for (int p = 0; p < parties; ++p)
     {
         for (int i = 0; i < n; ++i)
@@ -470,9 +470,9 @@ EXPORT void init_MKLweBootstrappingKeyFFT_v2(MKLweBootstrappingKeyFFT_v2 *obj,
             bkFFT[p*n+i].party = bk->bk[p*n+i].party;
         }
     }
-    clock_t end = clock();
-    double time = ((double) end - begin)/CLOCKS_PER_SEC;
-    cout << "Time BK FFT conversion: " << time << " seconds" << endl;
+//    clock_t end = clock();
+//    double time = ((double) end - begin)/CLOCKS_PER_SEC;
+//    cout << "Time BK FFT conversion: " << time << " seconds" << endl;
 
 
     new(obj) MKLweBootstrappingKeyFFT_v2(MKparams, bkFFT, ks);
