@@ -79,6 +79,12 @@ static void gen_keys(int ID)
     // Key generation
     cout << "Starting KEY GENERATION" << endl;
     //TODO: set random generator
+    srand(time(0));
+
+    uint32_t* values = new uint32_t[2];
+    values[0] = rand() % 42;
+    values[1] = time(0);
+    tfhe_random_generator_setSeed(values, 2);
 
     LweParams *extractedLWEparams = new_LweParams(n_extract, ks_stdev, max_stdev);
     LweParams *LWEparams = new_LweParams(n, ks_stdev, max_stdev);
