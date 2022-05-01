@@ -57,11 +57,14 @@ done
 NET_PATH=/home/daniil/IdeaProjects/anoma5/anoma-docker-testnet/compose/
 AUC_ID=$(cat $NET_PATH/auction_id | tr -d '\n')
 
-for i in 1 2 3 4
+for i in 1 2 3
 do
 	BID=$(base64 -w0 client$i/sampleSeq$i.binary)
-	echo '[{"addr":"atest1v4ehgw36g4pyg3j9x3qnjd3cxgmyz3fk8qcrys3hxdp5xwfnx3zyxsj9xgunxsfjg5u5xvzyzrrqtn","place_bid":{"bid": "'$BID'","bid_id": "'$i'", "auction_id": "'$AUC_ID'"  }}]' > $NET_PATH/bid$i.json
+	echo '[{"addr":"atest1v4ehgw36gs6rjd69xaqnj33kxqcnv3pc8qmryd6z8yeygdjrxepygwzrg4z52dekg4rrzwz9m09dm8","place_bid":{"bid": "'$BID'","bid_id": "'$i'", "auction_id": "'$AUC_ID'"  }}]' > $NET_PATH/bid$i.json
 
 done
+
+BID=$(base64 -w0 client4/sampleSeq4.binary)
+        echo '[{"addr":"atest1v4ehgw36xfzyvs3k8yurgde5g56nvd6xgverxsf58y6nsvzxxeq5g3fsg9qngwfkx5crxd3kku48em","place_bid":{"bid": "'$BID'","bid_id": "4", "auction_id": "'$AUC_ID'"  }}]' > $NET_PATH/bid4.json
 
 
